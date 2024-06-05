@@ -1,0 +1,49 @@
+workflows:
+    sample-workflow:
+        name: Godot Workflow
+        max_build_duration: 120
+        instance_type: mac_mini_m1
+        environment:
+            groups:
+                - godot
+            vars:
+                GODOT_VERSION: 3.5.3
+                GODOT_EXEC_URL: https://github.com/godotengine/godot/releases/download/3.5.3-stable/Godot_v3.5.3-stable_macos.universal.zip
+                GODOT_TEMPLATES_URL: https://github.com/godotengine/godot/releases/download/3.5.3-stable/Godot_v3.5.3-stable_export_templates.tpz
+                GODOT_TEMPLATES_DIR: "/Users/builder/Library/Application Support/Godot/export_templates"
+                GODOT_EXEC: Godot.app/Contents/MacOS/Godot
+                EXPORT_TYPE: iOS
+                ARTIFACT: app
+            xcode: latest
+        scripts:
+            - name: Download Godot engine
+              script: curl -L -o ./godot.zip ${GODOT_EXEC_URL} && unzip ./godot.zip
+            - name: Download Godot templates
+              script: curl -L -o ./godot-templates.zip ${GODOT_TEMPLATES_URL} && unzip ./godot-templates.zip
+            - name: Setup templates
+              script: mkdir -p "${GODOT_TEMPLATES_DIR}" && mv templates "${GODOT_TEMPLATES_DIR}/${GODOT_VERSION}.stable"
+            - name: Prepare build directory
+              script: mkdir build/
+              #- name: Decode export presets
+              #  script: echo ${GODOT_EXPORT_PRESETS} | base64 --decode > ./export_presets.cfg
+            - name: Export project
+              script: ${GODOT_EXEC} --path . --no-window --export "${EXPORT_TYPE}" build/${ARTIFACT}
+            - name: build
+              script: |
+                cd build
+
+                xcodebuild archive \
+                -project "app.xcodeproj" \
+                -scheme "app" \
+                -archivePath  archive_output.xcarchive \
+                -configuration release \
+                CODE_SIGN_IDENTITY="" \
+                CODE_SIGNING_REQUIRED=NO \
+                CODE_SIGNING_ALLOWED=NO \
+                || exit -1
+
+                mv archive_output.xcarchive/Products/{Applications,Payload}
+                7z a -tzip app.ipa ./archive_output.xcarchive/Products/Payload
+                7z a app.ipa.7z ./app.ipa
+        artifacts:
+            - build/app.ipa
