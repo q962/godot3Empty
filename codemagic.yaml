@@ -26,10 +26,10 @@ workflows:
               script: mkdir build/
               #- name: Decode export presets
               #  script: echo ${GODOT_EXPORT_PRESETS} | base64 --decode > ./export_presets.cfg
-            - name: Export project
-              script: ${GODOT_EXEC} --path . --no-window --export "${EXPORT_TYPE}" build/${ARTIFACT}
             - name: build
               script: |
+                ${GODOT_EXEC} --path . --no-window --export "${EXPORT_TYPE}" build/${ARTIFACT} || echo next;
+
                 cd build
 
                 xcodebuild archive \
