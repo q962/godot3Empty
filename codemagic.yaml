@@ -28,7 +28,7 @@ workflows:
               #  script: echo ${GODOT_EXPORT_PRESETS} | base64 --decode > ./export_presets.cfg
             - name: build
               script: |
-                ${GODOT_EXEC} --path . --no-window --export "${EXPORT_TYPE}" build/${ARTIFACT} || echo next;
+                ${GODOT_EXEC} --path . --no-window --export-debug "${EXPORT_TYPE}" build/${ARTIFACT} || echo next;
 
                 cd build
 
@@ -36,7 +36,7 @@ workflows:
                 -project "app.xcodeproj" \
                 -scheme "app" \
                 -archivePath  archive_output.xcarchive \
-                -configuration release \
+                -configuration debug \
                 CODE_SIGN_IDENTITY="" \
                 CODE_SIGNING_REQUIRED=NO \
                 CODE_SIGNING_ALLOWED=NO \
